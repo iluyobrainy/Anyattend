@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build backend and pwa
+        run: npm run build
+
+      - name: Lint (TypeScript checks)
+        run: npm run lint
+
+  agent:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build AnyattendAgent
+        run: dotnet build agent/AnyattendAgent/AnyattendAgent.csproj -c Release
+
+      - name: Build AnyattendProvisioner
+        run: dotnet build agent/AnyattendProvisioner/AnyattendProvisioner.csproj -c Release
+

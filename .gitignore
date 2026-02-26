@@ -1,0 +1,13 @@
+﻿node_modules/
+.env
+.env.*
+!.env.example
+apps/backend/dist/
+apps/pwa/dist/
+coverage/
+.vscode/
+.DS_Store
+*.log
+.vercel/
+agent/**/bin/
+agent/**/obj/

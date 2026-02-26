@@ -1,0 +1,19 @@
+﻿{
+  email admin@example.com
+}
+
+{$ANYATTEND_DOMAIN} {
+  encode zstd gzip
+
+  handle /v1/* {
+    reverse_proxy backend:8080
+  }
+
+  handle /health {
+    reverse_proxy backend:8080
+  }
+
+  handle {
+    reverse_proxy pwa:80
+  }
+}

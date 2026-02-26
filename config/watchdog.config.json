@@ -1,0 +1,5 @@
+{
+  "service_name": "AnyDesk",
+  "check_interval_sec": 60,
+  "alert_webhook_url": ""
+}
