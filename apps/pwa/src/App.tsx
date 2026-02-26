@@ -5,7 +5,6 @@ import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DevicePage } from "./pages/DevicePage";
 import { PairingPage } from "./pages/PairingPage";
-import { LandingPage } from "./pages/LandingPage";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY ?? "";
 
@@ -57,10 +56,10 @@ function AuthenticatedLayout({
   const location = useLocation();
 
   const title = useMemo(() => {
-    if (location.pathname.startsWith("/app/pair")) {
+    if (location.pathname.startsWith("/pair")) {
       return "Pair New Device";
     }
-    if (location.pathname.startsWith("/app/devices/")) {
+    if (location.pathname.startsWith("/devices/")) {
       return "Device Details";
     }
     return "Operations Console";
@@ -75,14 +74,11 @@ function AuthenticatedLayout({
           <p className="muted">{session.admin.email}</p>
         </div>
         <div className="topbar-actions">
-          <button onClick={() => navigate("/app")} className="ghost-btn" type="button">
+          <button onClick={() => navigate("/")} className="ghost-btn" type="button">
             Dashboard
           </button>
-          <button onClick={() => navigate("/app/pair")} className="ghost-btn" type="button">
+          <button onClick={() => navigate("/pair")} className="ghost-btn" type="button">
             Pair Device
-          </button>
-          <button onClick={() => navigate("/")} className="ghost-btn" type="button">
-            Public Site
           </button>
           <button onClick={() => onLogout()} className="danger-btn" type="button">
             Sign Out
@@ -111,41 +107,24 @@ export function App() {
     }
   }, [session]);
 
+  if (!session) {
+    return (
+      <LoginPage
+        onLogin={(nextSession) => {
+          writeSession(nextSession);
+          setSession(nextSession);
+        }}
+      />
+    );
+  }
+
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route
-        path="/app/login"
-        element={
-          session ? (
-            <Navigate to="/app" replace />
-          ) : (
-            <LoginPage
-              onLogin={(nextSession) => {
-                writeSession(nextSession);
-                setSession(nextSession);
-              }}
-            />
-          )
-        }
-      />
-      <Route
-        path="/app/*"
-        element={
-          session ? (
-            <AuthenticatedLayout
-              session={session}
-              onLogout={async () => {
-                await logout();
-                setSession(null);
-              }}
-            />
-          ) : (
-            <Navigate to="/app/login" replace />
-          )
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <AuthenticatedLayout
+      session={session}
+      onLogout={async () => {
+        await logout();
+        setSession(null);
+      }}
+    />
   );
 }

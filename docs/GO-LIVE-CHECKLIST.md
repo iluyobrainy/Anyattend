@@ -60,9 +60,9 @@ node .\deploy\scripts\generate-vapid-keys.mjs
 
 Set both keys in Railway env and set `VITE_VAPID_PUBLIC_KEY` in Vercel.
 
-## 4) PWA + Website on Vercel
+## 4) Deploy PWA Admin App on Vercel (separate project)
 
-Deploy from `apps/pwa`:
+Deploy from `apps/pwa` as project name `anyattend-admin`:
 
 ```powershell
 Set-Location C:\Users\LENOVO\Desktop\Anyattend\apps\pwa
@@ -76,7 +76,6 @@ When prompted:
 Set Vercel env vars:
 - `VITE_API_BASE_URL=https://<your-railway-backend-url>`
 - `VITE_VAPID_PUBLIC_KEY=<same public key as Railway>`
-- `VITE_WINDOWS_EXE_URL=https://github.com/<owner>/<repo>/releases/latest/download/Anyattend-Setup.exe`
 
 Then deploy production:
 
@@ -89,7 +88,28 @@ If your deployment returns a Vercel Authentication page, disable deployment prot
 2. Deployment Protection
 3. Turn off `Vercel Authentication` for Production
 
-## 5) Build EXE via GitHub Actions
+## 5) Deploy Anyattend Marketing/Download Site on Vercel (separate project)
+
+Deploy from `apps/site` as project name `anyattend`:
+
+```powershell
+Set-Location C:\Users\LENOVO\Desktop\Anyattend\apps\site
+vercel
+```
+
+Set env vars:
+- `VITE_WEBAPP_URL=https://<your-admin-vercel-domain>`
+- `VITE_WINDOWS_EXE_URL=/downloads/Anyattend-Setup.exe` (or GitHub release URL)
+
+Deploy production:
+
+```powershell
+vercel --prod
+```
+
+Disable production deployment protection here too so public users can access download.
+
+## 6) Build EXE via GitHub Actions
 
 1. In GitHub, create a tag:
 
@@ -101,7 +121,7 @@ git push origin v1.0.0
 2. Workflow `Release Installer` builds `Anyattend-Setup.exe` and attaches it to release.
 3. The landing page download button points to `releases/latest/download/Anyattend-Setup.exe`.
 
-## 6) Connectee Laptop (your main accepting laptop)
+## 7) Connectee Laptop (your main accepting laptop)
 
 1. Open website and download installer EXE.
 2. Install Anyattend.
@@ -114,7 +134,7 @@ git push origin v1.0.0
 5. Confirm device appears online in dashboard.
 6. Configure AnyDesk unattended mode + ACL allow-list.
 
-## 7) Requester Laptop Test (second laptop / AWS Windows)
+## 8) Requester Laptop Test (second laptop / AWS Windows)
 
 1. Use AnyDesk client to connect to your main laptop ID.
 2. Reconnect after transient network drop.
@@ -125,7 +145,7 @@ git push origin v1.0.0
    - `UNLOCK_REMOTE`
 5. Confirm command acks and event logs.
 
-## 8) Acceptance Gate
+## 9) Acceptance Gate
 
 - Device visible and online in web app.
 - Pairing completes successfully.

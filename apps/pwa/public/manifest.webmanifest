@@ -1,7 +1,7 @@
 {
   "name": "Anyattend Admin",
   "short_name": "Anyattend",
-  "start_url": "/app/login",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#f7f5f2",
   "theme_color": "#f97316",

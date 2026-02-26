@@ -2,14 +2,15 @@
 
 Production-oriented scaffold for AnyDesk-compatible remote operations with:
 - public website + installer download
-- installable admin PWA
+- separate installable admin PWA
 - Railway backend API
 - Windows agent + provisioner + EXE packaging
 
 ## What this implementation contains
 
 - `apps/backend`: TypeScript API for admin auth, device pairing, device heartbeats/alerts, command queue, and audit events.
-- `apps/pwa`: Public landing/download site at `/` and installable admin PWA at `/app/*`.
+- `apps/site`: Anyattend product website and Windows installer download surface.
+- `apps/pwa`: Dedicated admin PWA (login, pairing, device actions, alerts).
 - `agent/AnyattendAgent`: .NET 8 Windows Service scaffold (poll commands, heartbeat, alert, execute commands).
 - `agent/AnyattendProvisioner`: .NET 8 CLI provisioning tool (pair + write `C:\ProgramData\Anyattend\agent.json` + DPAPI token).
 - `installer/Anyattend.iss`: Inno Setup script for EXE installer packaging.
@@ -82,6 +83,14 @@ npm run dev:pwa
 ```
 
 PWA default URL: `http://localhost:5173`
+
+### 6) Start marketing site
+
+```powershell
+npm run dev:site
+```
+
+Site default URL: `http://localhost:5174`
 
 ## Agent provisioning flow (intended)
 

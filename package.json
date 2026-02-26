@@ -4,12 +4,14 @@
   "private": true,
   "workspaces": [
     "apps/backend",
-    "apps/pwa"
+    "apps/pwa",
+    "apps/site"
   ],
   "scripts": {
     "dev:backend": "npm --workspace apps/backend run dev",
     "dev:pwa": "npm --workspace apps/pwa run dev",
-    "build": "npm run build -w apps/backend && npm run build -w apps/pwa",
-    "lint": "npm run lint -w apps/backend && npm run lint -w apps/pwa"
+    "dev:site": "npm --workspace apps/site run dev",
+    "build": "npm run build -w apps/backend && npm run build -w apps/pwa && npm run build -w apps/site",
+    "lint": "npm run lint -w apps/backend && npm run lint -w apps/pwa && npm run lint -w apps/site"
   }
 }

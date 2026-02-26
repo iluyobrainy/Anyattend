@@ -29,3 +29,6 @@
   - `apps/pwa/vercel.json`
 - Added public landing/download page route in PWA (`/`).
 - Added go-live runbook: `docs/GO-LIVE-CHECKLIST.md`.
+- Split deployment surfaces:
+  - `apps/site` for public Anyattend website + Windows download
+  - `apps/pwa` for separate admin web app
