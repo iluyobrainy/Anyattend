@@ -11,3 +11,6 @@ coverage/
 .vercel/
 agent/**/bin/
 agent/**/obj/
+agent/publish/
+installer/Output/
+apps/pwa/tsconfig.tsbuildinfo
