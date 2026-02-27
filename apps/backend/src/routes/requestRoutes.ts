@@ -3,7 +3,7 @@ import { z } from "zod";
 import { pool } from "../db.js";
 import { requireAdmin, type AdminRequest } from "../middleware/adminAuth.js";
 import { config } from "../config.js";
-import { normalizeAnyDeskId } from "../services/anydeskIdService.js";
+import { formatAnyDeskId, normalizeAnyDeskId } from "../services/anydeskIdService.js";
 import { sendPushToAdmin } from "../services/pushService.js";
 
 const submitRequestSchema = z.object({
@@ -206,7 +206,7 @@ export function createAdminRequestRoutes(): Router {
     res.json({
       requests: result.rows.map((row) => ({
         id: row.id,
-        requester_anydesk_id: row.requester_display_anydesk_id,
+        requester_anydesk_id: formatAnyDeskId(row.requester_normalized_anydesk_id),
         requester_normalized_anydesk_id: row.requester_normalized_anydesk_id,
         requester_label: row.requester_label,
         note: row.note,

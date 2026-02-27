@@ -7,7 +7,7 @@ export function normalizeAnyDeskIdInput(raw: string): { normalized: string; disp
 }
 
 export function formatAnyDeskId(value: string): string {
-  return value.replace(/(\d{3})(?=\d)/g, "$1 ").trim();
+  return value.replace(/\B(?=(\d{3})+(?!\d))/g, " ").trim();
 }
 
 export function validateAnyDeskId(raw: string): string | null {
@@ -15,8 +15,8 @@ export function validateAnyDeskId(raw: string): string | null {
   if (!normalized) {
     return "AnyDesk ID is required.";
   }
-  if (normalized.length < 9 || normalized.length > 12) {
-    return "AnyDesk ID must be 9 to 12 digits (example: 806 716 144).";
+  if (normalized.length < 9 || normalized.length > 10) {
+    return "AnyDesk ID must be 9 or 10 digits (example: 806 716 144 or 1 930 205 528).";
   }
   return null;
 }

@@ -123,9 +123,9 @@ begin
   if CurPageID = AnyDeskPage.ID then
   begin
     IdDigits := DigitsOnly(AnyDeskPage.Values[0]);
-    if (Length(IdDigits) < 9) or (Length(IdDigits) > 12) then
+    if (Length(IdDigits) < 9) or (Length(IdDigits) > 10) then
     begin
-      MsgBox('AnyDesk ID must be 9 to 12 digits.', mbError, MB_OK);
+      MsgBox('AnyDesk ID must be 9 or 10 digits.', mbError, MB_OK);
       Result := False;
       exit;
     end;
