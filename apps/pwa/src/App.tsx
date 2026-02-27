@@ -13,6 +13,7 @@ import { activateRole, fetchRoles } from "./api/whitelist";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DevicePage } from "./pages/DevicePage";
+import { IncomingRequestsPage } from "./pages/IncomingRequestsPage";
 import { PairingPage } from "./pages/PairingPage";
 import { WhitelistPage } from "./pages/WhitelistPage";
 
@@ -78,6 +79,9 @@ function AuthenticatedLayout({
     if (location.pathname.startsWith("/whitelist")) {
       return "Whitelist";
     }
+    if (location.pathname.startsWith("/requests")) {
+      return "Incoming Requests";
+    }
     return "Operations Console";
   }, [location.pathname]);
 
@@ -96,7 +100,7 @@ function AuthenticatedLayout({
     <div className="shell">
       <header className="topbar">
         <div>
-          <p className="brand-tag">Anyattend v1.1</p>
+          <p className="brand-tag">Anyattend v1.2</p>
           <h1>{title}</h1>
           <p className="muted">{session.admin.anydesk_id}</p>
         </div>
@@ -130,6 +134,9 @@ function AuthenticatedLayout({
           <button onClick={() => navigate("/whitelist")} className="ghost-btn" type="button">
             Whitelist
           </button>
+          <button onClick={() => navigate("/requests")} className="ghost-btn" type="button">
+            Requests
+          </button>
           <button onClick={() => navigate("/pair")} className="ghost-btn" type="button">
             Pair Device
           </button>
@@ -142,6 +149,7 @@ function AuthenticatedLayout({
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/whitelist" element={<WhitelistPage />} />
+          <Route path="/requests" element={<IncomingRequestsPage />} />
           <Route path="/pair" element={<PairingPage />} />
           <Route path="/devices/:deviceId" element={<DevicePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

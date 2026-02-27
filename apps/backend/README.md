@@ -13,6 +13,8 @@
 - Health: `/health`
 - Admin auth (primary): `/v2/auth/*`
 - Whitelist + role APIs: `/v2/*`
+- Incoming requests (admin): `/v2/requests`, `/v2/requests/:id/decision`
+- Incoming requests (public submit): `/v2/public/requests`
 - Device enrollment (v1.1): `/v2/device/enroll`
 - Legacy admin auth (feature-flagged): `/v1/auth/*`
 - Admin device APIs (existing): `/v1/*`

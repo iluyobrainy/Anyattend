@@ -32,5 +32,6 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  event.waitUntil(clients.openWindow("/"));
+  const targetPath = event.notification?.data?.event_type === "incoming_request" ? "/requests" : "/";
+  event.waitUntil(clients.openWindow(targetPath));
 });

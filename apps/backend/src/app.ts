@@ -6,6 +6,7 @@ import { createAuthRoutes } from "./routes/authRoutes.js";
 import { createAuthV2Routes } from "./routes/authV2Routes.js";
 import { createAdminRoutes } from "./routes/adminRoutes.js";
 import { createDeviceRoutes } from "./routes/deviceRoutes.js";
+import { createAdminRequestRoutes, createPublicRequestRoutes } from "./routes/requestRoutes.js";
 import { createV2DeviceRoutes } from "./routes/v2DeviceRoutes.js";
 import { createV2Routes } from "./routes/v2Routes.js";
 import { isPushEnabled } from "./services/pushService.js";
@@ -53,7 +54,9 @@ export function buildApp() {
 
   app.use("/v1/auth", createAuthRoutes());
   app.use("/v2/auth", createAuthV2Routes());
+  app.use("/v2/public", createPublicRequestRoutes());
   app.use("/v1", createAdminRoutes());
+  app.use("/v2", createAdminRequestRoutes());
   app.use("/v2", createV2Routes());
   app.use("/v1/device", createDeviceRoutes());
   app.use("/v2/device", createV2DeviceRoutes());

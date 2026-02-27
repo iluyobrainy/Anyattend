@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchDevices, type Device } from "../api/devices";
+import { fetchIncomingRequests } from "../api/requests";
 
 function statusClass(status: string): string {
   switch (status) {
@@ -17,6 +18,7 @@ function statusClass(status: string): string {
 
 export function DashboardPage() {
   const [devices, setDevices] = useState<Device[]>([]);
+  const [pendingRequests, setPendingRequests] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -25,8 +27,9 @@ export function DashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const list = await fetchDevices();
+      const [list, requests] = await Promise.all([fetchDevices(), fetchIncomingRequests("pending")]);
       setDevices(list);
+      setPendingRequests(requests.length);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch devices.");
     } finally {
@@ -47,9 +50,14 @@ export function DashboardPage() {
     <section>
       <div className="section-header">
         <h2>Registered Devices</h2>
-        <button type="button" className="ghost-btn" onClick={() => void loadDevices()}>
-          Refresh
-        </button>
+        <div className="button-row">
+          <button type="button" className="ghost-btn" onClick={() => navigate("/requests")}>
+            Requests: {pendingRequests}
+          </button>
+          <button type="button" className="ghost-btn" onClick={() => void loadDevices()}>
+            Refresh
+          </button>
+        </div>
       </div>
 
       {loading ? <p className="muted">Loading devices...</p> : null}

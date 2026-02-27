@@ -111,6 +111,8 @@ h1 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border: 0;
+  cursor: pointer;
 }
 
 .btn.primary {
@@ -162,6 +164,47 @@ h1 {
   margin: 0.4rem 0 0;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.request-card {
+  margin-top: 1rem;
+}
+
+.request-form {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.request-form label {
+  display: grid;
+  gap: 0.28rem;
+  font-weight: 600;
+  font-size: 0.93rem;
+  color: var(--ink);
+}
+
+.request-form input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.62rem 0.7rem;
+  font: inherit;
+  background: #fff;
+}
+
+.request-form input:focus {
+  outline: 3px solid rgba(255, 122, 24, 0.2);
+  border-color: rgba(255, 122, 24, 0.6);
+}
+
+.form-error {
+  margin: 0;
+  color: #b91c1c;
+}
+
+.form-success {
+  margin: 0;
+  color: #166534;
 }
 
 .steps {

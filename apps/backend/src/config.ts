@@ -26,6 +26,7 @@ const schema = z.object({
   AUTH_MODE: z.enum(["ANYDESK_ID_CHALLENGE", "LEGACY"]).default("ANYDESK_ID_CHALLENGE"),
   ENABLE_LEGACY_AUTH: envBoolean.default(false),
   OWNERSHIP_CHALLENGE_TTL_MIN: z.coerce.number().default(10),
+  CONNECTION_REQUEST_TTL_MIN: z.coerce.number().default(10),
   AUTH_CHALLENGE_DEBUG: envBoolean.default(true),
   JWT_SECRET: z.string().min(16),
   JWT_EXPIRES_IN: z.string().default("15m"),
@@ -41,7 +42,9 @@ const schema = z.object({
   BOOTSTRAP_ADMIN_EMAIL: z.string().email().default("admin@example.com"),
   BOOTSTRAP_ADMIN_PASSWORD: z.string().min(12).default("ChangeMeNow123!"),
   BOOTSTRAP_ADMIN_TOTP_SECRET: z.string().min(8).default("JBSWY3DPEHPK3PXP"),
-  ALLOWED_ORIGINS: z.string().default("http://localhost:5173")
+  ALLOWED_ORIGINS: z
+    .string()
+    .default("http://localhost:5173,http://localhost:5174,https://anyattend.vercel.app,https://anyattend-admin.vercel.app")
 });
 
 const parsed = schema.safeParse(process.env);

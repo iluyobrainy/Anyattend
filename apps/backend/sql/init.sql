@@ -183,3 +183,21 @@ CREATE TABLE IF NOT EXISTS acl_sync_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_acl_sync_owner_time ON acl_sync_events(owner_identity_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS connection_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_identity_id UUID NOT NULL REFERENCES identities(id) ON DELETE CASCADE,
+  requester_normalized_anydesk_id TEXT NOT NULL,
+  requester_display_anydesk_id TEXT NOT NULL,
+  requester_label TEXT,
+  note TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  decided_at TIMESTAMPTZ,
+  decision_note TEXT,
+  decided_by_identity_id UUID REFERENCES identities(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_connection_requests_owner_status_time
+  ON connection_requests(owner_identity_id, status, requested_at DESC);
