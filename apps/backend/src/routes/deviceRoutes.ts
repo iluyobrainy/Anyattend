@@ -50,7 +50,7 @@ export function createDeviceRoutes(): Router {
     }
 
     const sessionResult = await pool.query(
-      `SELECT id, admin_id, device_label, pairing_code_hash, expires_at, used_at
+      `SELECT id, admin_id, owner_identity_id, device_label, pairing_code_hash, expires_at, used_at
        FROM pairing_sessions
        WHERE id = $1`,
       [parsed.data.pairing_session_id]
@@ -79,12 +79,33 @@ export function createDeviceRoutes(): Router {
 
     const token = createDeviceToken(config.DEVICE_TOKEN_BYTES);
     const tokenHash = hashDeviceToken(token);
+    let ownerIdentityId = session.owner_identity_id as string | null;
+
+    if (!ownerIdentityId && session.admin_id) {
+      const identityResult = await pool.query(
+        `SELECT id
+         FROM identities
+         WHERE legacy_admin_id = $1
+         LIMIT 1`,
+        [session.admin_id]
+      );
+      ownerIdentityId = (identityResult.rows[0]?.id as string | undefined) ?? null;
+    }
 
     const deviceInsert = await pool.query(
-      `INSERT INTO devices (owner_admin_id, label, host, status, last_seen, poll_interval_sec, service_name, webhook_fallback_url, api_token_hash, paired_at)
-       VALUES ($1, $2, $3, 'online', NOW(), $4, $5, $6, $7, NOW())
+      `INSERT INTO devices (owner_admin_id, owner_identity_id, label, host, status, last_seen, poll_interval_sec, service_name, webhook_fallback_url, api_token_hash, paired_at)
+       VALUES ($1, $2, $3, $4, 'online', NOW(), $5, $6, $7, $8, NOW())
        RETURNING id, label, poll_interval_sec, service_name, webhook_fallback_url`,
-      [session.admin_id, session.device_label, parsed.data.host ?? null, parsed.data.poll_interval_sec, parsed.data.service_name, parsed.data.webhook_fallback_url, tokenHash]
+      [
+        session.admin_id,
+        ownerIdentityId,
+        session.device_label,
+        parsed.data.host ?? null,
+        parsed.data.poll_interval_sec,
+        parsed.data.service_name,
+        parsed.data.webhook_fallback_url,
+        tokenHash
+      ]
     );
 
     await pool.query(`UPDATE pairing_sessions SET used_at = NOW() WHERE id = $1`, [session.id]);

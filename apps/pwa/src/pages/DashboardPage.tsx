@@ -72,7 +72,7 @@ export function DashboardPage() {
       {!loading && devices.length === 0 ? (
         <div className="empty-state">
           <h3>No devices paired yet</h3>
-          <p>Open Pair Device to generate a QR session for the connectee laptop installer.</p>
+          <p>Open Pair Device to generate an ownership challenge for the connectee laptop installer.</p>
         </div>
       ) : null}
     </section>

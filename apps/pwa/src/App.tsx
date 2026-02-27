@@ -1,10 +1,20 @@
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { getApiBase, logout, readSession, registerPushSubscription, writeSession, type SessionState } from "./api/client";
+import {
+  getApiBase,
+  logout,
+  patchSessionAdmin,
+  readSession,
+  registerPushSubscription,
+  writeSession,
+  type SessionState
+} from "./api/client";
+import { activateRole, fetchRoles } from "./api/whitelist";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DevicePage } from "./pages/DevicePage";
 import { PairingPage } from "./pages/PairingPage";
+import { WhitelistPage } from "./pages/WhitelistPage";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY ?? "";
 
@@ -47,13 +57,16 @@ async function enablePushIfPossible(): Promise<void> {
 
 function AuthenticatedLayout({
   session,
+  onSessionUpdate,
   onLogout
 }: {
   session: SessionState;
+  onSessionUpdate: (session: SessionState) => void;
   onLogout: () => Promise<void>;
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [roleBusy, setRoleBusy] = useState(false);
 
   const title = useMemo(() => {
     if (location.pathname.startsWith("/pair")) {
@@ -62,20 +75,60 @@ function AuthenticatedLayout({
     if (location.pathname.startsWith("/devices/")) {
       return "Device Details";
     }
+    if (location.pathname.startsWith("/whitelist")) {
+      return "Whitelist";
+    }
     return "Operations Console";
   }, [location.pathname]);
+
+  useEffect(() => {
+    fetchRoles()
+      .then((roles) => {
+        const next = patchSessionAdmin({ active_role: roles.active_role });
+        if (next) {
+          onSessionUpdate(next);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   return (
     <div className="shell">
       <header className="topbar">
         <div>
-          <p className="brand-tag">Anyattend v1</p>
+          <p className="brand-tag">Anyattend v1.1</p>
           <h1>{title}</h1>
-          <p className="muted">{session.admin.email}</p>
+          <p className="muted">{session.admin.anydesk_id}</p>
         </div>
         <div className="topbar-actions">
+          <label className="role-switch">
+            Role
+            <select
+              value={session.admin.active_role}
+              disabled={roleBusy}
+              onChange={async (e) => {
+                const role = e.target.value as "admin" | "connectee";
+                setRoleBusy(true);
+                try {
+                  await activateRole(role);
+                  const next = patchSessionAdmin({ active_role: role });
+                  if (next) {
+                    onSessionUpdate(next);
+                  }
+                } finally {
+                  setRoleBusy(false);
+                }
+              }}
+            >
+              <option value="admin">admin</option>
+              <option value="connectee">connectee</option>
+            </select>
+          </label>
           <button onClick={() => navigate("/")} className="ghost-btn" type="button">
             Dashboard
+          </button>
+          <button onClick={() => navigate("/whitelist")} className="ghost-btn" type="button">
+            Whitelist
           </button>
           <button onClick={() => navigate("/pair")} className="ghost-btn" type="button">
             Pair Device
@@ -88,6 +141,7 @@ function AuthenticatedLayout({
       <main className="content">
         <Routes>
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/whitelist" element={<WhitelistPage />} />
           <Route path="/pair" element={<PairingPage />} />
           <Route path="/devices/:deviceId" element={<DevicePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -121,6 +175,7 @@ export function App() {
   return (
     <AuthenticatedLayout
       session={session}
+      onSessionUpdate={(next) => setSession(next)}
       onLogout={async () => {
         await logout();
         setSession(null);

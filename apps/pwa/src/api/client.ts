@@ -5,9 +5,40 @@ export interface SessionState {
   refreshToken: string;
   admin: {
     id: string;
-    email: string;
+    identity_id: string;
+    anydesk_id: string;
     role: "admin";
+    active_role: "admin" | "connectee";
   };
+}
+
+export interface ChallengeStartResponse {
+  challenge_id: string;
+  expires_at: string;
+  linked_device_id: string | null;
+  anydesk_id: string;
+  delivery: {
+    method: string;
+    note: string;
+  };
+  development_verification_code?: string;
+}
+
+function parseErrorText(text: string): string {
+  if (!text) {
+    return "Request failed.";
+  }
+
+  try {
+    const parsed = JSON.parse(text) as { error?: string };
+    if (parsed.error) {
+      return parsed.error;
+    }
+  } catch {
+    // Ignore parse errors and fall through to raw text.
+  }
+
+  return text;
 }
 
 function getSession(): SessionState | null {
@@ -43,7 +74,7 @@ interface RequestOptions {
 }
 
 async function refreshToken(session: SessionState): Promise<SessionState | null> {
-  const response = await fetch(`${API_BASE}/v1/auth/refresh`, {
+  const response = await fetch(`${API_BASE}/v2/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh_token: session.refreshToken })
@@ -54,11 +85,16 @@ async function refreshToken(session: SessionState): Promise<SessionState | null>
     return null;
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as {
+    access_token: string;
+    refresh_token: string;
+    admin: SessionState["admin"];
+  };
+
   const updated: SessionState = {
-    ...session,
     accessToken: data.access_token,
-    refreshToken: data.refresh_token
+    refreshToken: data.refresh_token,
+    admin: data.admin
   };
   writeSession(updated);
   return updated;
@@ -95,7 +131,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Request failed with status ${response.status}`);
+    throw new Error(parseErrorText(text) || `Request failed with status ${response.status}`);
   }
 
   if (response.status === 204) {
@@ -105,18 +141,25 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   return (await response.json()) as T;
 }
 
-export async function login(email: string, password: string, totpCode: string): Promise<SessionState> {
+export async function startAdminAuth(anydeskId: string): Promise<ChallengeStartResponse> {
+  return apiRequest<ChallengeStartResponse>("/v2/auth/admin/start", {
+    method: "POST",
+    auth: false,
+    body: { anydesk_id: anydeskId }
+  });
+}
+
+export async function verifyAdminAuth(challengeId: string, verificationCode: string): Promise<SessionState> {
   const result = await apiRequest<{
     access_token: string;
     refresh_token: string;
     admin: SessionState["admin"];
-  }>("/v1/auth/login", {
+  }>("/v2/auth/admin/verify", {
     method: "POST",
     auth: false,
     body: {
-      email,
-      password,
-      totp_code: totpCode
+      challenge_id: challengeId,
+      verification_code: verificationCode
     }
   });
 
@@ -133,7 +176,7 @@ export async function login(email: string, password: string, totpCode: string): 
 export async function logout(): Promise<void> {
   const session = getSession();
   if (session) {
-    await apiRequest("/v1/auth/logout", {
+    await apiRequest("/v2/auth/logout", {
       method: "POST",
       body: { refresh_token: session.refreshToken }
     }).catch(() => undefined);
@@ -147,6 +190,23 @@ export async function registerPushSubscription(subscription: PushSubscription): 
     method: "POST",
     body: subscription.toJSON()
   });
+}
+
+export function patchSessionAdmin(patch: Partial<SessionState["admin"]>): SessionState | null {
+  const current = getSession();
+  if (!current) {
+    return null;
+  }
+
+  const next: SessionState = {
+    ...current,
+    admin: {
+      ...current.admin,
+      ...patch
+    }
+  };
+  writeSession(next);
+  return next;
 }
 
 export function getApiBase(): string {

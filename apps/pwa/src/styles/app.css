@@ -151,6 +151,43 @@ input:focus {
   font-size: 0.92rem;
 }
 
+.success-msg {
+  color: #166534;
+  font-size: 0.92rem;
+}
+
+.input-hint {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.button-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.detail-inline {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fafafa;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.debug-chip {
+  display: inline-block;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  background: #fffbeb;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.8rem;
+  width: fit-content;
+}
+
 .shell {
   min-height: 100vh;
   max-width: 1200px;
@@ -174,6 +211,22 @@ input:focus {
   display: flex;
   gap: 0.7rem;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.role-switch {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.role-switch select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.38rem 0.5rem;
+  background: #fff;
 }
 
 .content {

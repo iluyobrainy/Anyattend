@@ -1,20 +1,23 @@
 import { useState } from "react";
-import { login, type SessionState } from "../api/client";
+import { startAdminAuth, verifyAdminAuth, type ChallengeStartResponse, type SessionState } from "../api/client";
+import { normalizeAnyDeskIdInput, validateAnyDeskId } from "../utils/anydeskId";
 
 export function LoginPage({ onLogin }: { onLogin: (session: SessionState) => void }) {
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("");
-  const [totp, setTotp] = useState("");
+  const [anydeskId, setAnydeskId] = useState("");
+  const [challenge, setChallenge] = useState<ChallengeStartResponse | null>(null);
+  const [verificationCode, setVerificationCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const isVerifyStep = Boolean(challenge);
 
   return (
     <div className="login-page">
       <section className="login-panel">
         <p className="brand-tag">Anyattend Admin</p>
-        <h1>Secure Remote Operations</h1>
+        <h1>AnyDesk ID Verification</h1>
         <p className="muted">
-          Sign in with password + TOTP to monitor device health, dispatch commands, and verify unattended access status.
+          Sign in with your AnyDesk ID and ownership challenge code. Spaces are accepted (example: 806 716 144).
         </p>
         <form
           onSubmit={async (event) => {
@@ -22,10 +25,27 @@ export function LoginPage({ onLogin }: { onLogin: (session: SessionState) => voi
             setBusy(true);
             setError("");
             try {
-              const session = await login(email, password, totp);
+              if (!isVerifyStep) {
+                const validationError = validateAnyDeskId(anydeskId);
+                if (validationError) {
+                  throw new Error(validationError);
+                }
+
+                const { normalized } = normalizeAnyDeskIdInput(anydeskId);
+                const started = await startAdminAuth(normalized);
+                setChallenge(started);
+                setAnydeskId(started.anydesk_id);
+                return;
+              }
+
+              if (!/^\d{6}$/.test(verificationCode)) {
+                throw new Error("Verification code must be exactly 6 digits.");
+              }
+
+              const session = await verifyAdminAuth(challenge!.challenge_id, verificationCode);
               onLogin(session);
             } catch (err) {
-              setError(err instanceof Error ? err.message : "Login failed");
+              setError(err instanceof Error ? err.message : "Authentication failed");
             } finally {
               setBusy(false);
             }
@@ -33,42 +53,79 @@ export function LoginPage({ onLogin }: { onLogin: (session: SessionState) => voi
           className="form-grid"
         >
           <label>
-            Email
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
-          </label>
-          <label>
-            Password
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
-          </label>
-          <label>
-            TOTP Code
+            AnyDesk ID
             <input
-              value={totp}
-              onChange={(e) => setTotp(e.target.value)}
+              value={anydeskId}
+              onChange={(e) => setAnydeskId(normalizeAnyDeskIdInput(e.target.value).display)}
               inputMode="numeric"
-              pattern="[0-9]{6}"
-              placeholder="123456"
+              autoComplete="off"
+              placeholder="806 716 144"
+              disabled={isVerifyStep}
               required
             />
+            {!isVerifyStep ? <span className="input-hint">Use digits only; spacing is formatted automatically.</span> : null}
           </label>
+
+          {isVerifyStep ? (
+            <label>
+              Verification Code
+              <input
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D+/g, "").slice(0, 6))}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="123456"
+                required
+              />
+              <span className="input-hint">Enter the 6-digit ownership challenge code.</span>
+            </label>
+          ) : null}
+
+          {challenge ? (
+            <div className="detail-inline">
+              <p className="muted">Challenge ID: {challenge.challenge_id}</p>
+              <p className="muted">Expires: {new Date(challenge.expires_at).toLocaleString()}</p>
+              <p className="muted">{challenge.delivery.note}</p>
+              {challenge.development_verification_code ? (
+                <p className="debug-chip">Dev code: {challenge.development_verification_code}</p>
+              ) : null}
+            </div>
+          ) : null}
+
           {error ? <p className="error-msg">{error}</p> : null}
-          <button className="primary-btn" type="submit" disabled={busy}>
-            {busy ? "Signing in..." : "Sign In"}
-          </button>
+          <div className="button-row">
+            {isVerifyStep ? (
+              <button
+                className="ghost-btn"
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setChallenge(null);
+                  setVerificationCode("");
+                  setError("");
+                }}
+              >
+                Back
+              </button>
+            ) : null}
+            <button className="primary-btn" type="submit" disabled={busy}>
+              {busy ? "Working..." : isVerifyStep ? "Verify and Sign In" : "Start Verification"}
+            </button>
+          </div>
         </form>
       </section>
       <aside className="login-aside">
         <div className="stat-card">
-          <h2>Model</h2>
-          <p>AnyDesk unattended access + ACL + agent watchdog.</p>
+          <h2>ID Model</h2>
+          <p>AnyDesk ID is normalized as digits-only and displayed with grouped spacing.</p>
         </div>
         <div className="stat-card">
-          <h2>Controls</h2>
-          <p>Restart service, lock/unlock remote endpoint, run validation.</p>
+          <h2>Whitelist</h2>
+          <p>Approved requester IDs are managed in the app and synced for ACL workflows.</p>
         </div>
         <div className="stat-card">
-          <h2>Delivery</h2>
-          <p>Installable PWA from browser, real-time push alerts.</p>
+          <h2>Roles</h2>
+          <p>Verified identities can switch between admin and connectee modes without re-pairing.</p>
         </div>
       </aside>
     </div>

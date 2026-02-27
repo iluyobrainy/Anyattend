@@ -9,11 +9,16 @@
 
 ## API Prefixes
 
-- Admin auth: `/v1/auth/*`
-- Admin device APIs: `/v1/*`
+- API banner: `/`
+- Health: `/health`
+- Admin auth (primary): `/v2/auth/*`
+- Whitelist + role APIs: `/v2/*`
+- Device enrollment (v1.1): `/v2/device/enroll`
+- Legacy admin auth (feature-flagged): `/v1/auth/*`
+- Admin device APIs (existing): `/v1/*`
 - Device agent APIs: `/v1/device/*`
 
 ## Bootstrap Admin
 
-On startup, backend ensures a bootstrap admin from env vars exists.
-Use that account for first login in the PWA.
+On startup, backend can ensure a bootstrap admin from env vars exists for legacy auth.
+In `AUTH_MODE=ANYDESK_ID_CHALLENGE`, primary login is AnyDesk ID + ownership challenge.

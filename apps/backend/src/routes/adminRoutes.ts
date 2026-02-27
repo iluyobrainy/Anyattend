@@ -163,9 +163,9 @@ export function createAdminRoutes(): Router {
     const expiresAt = new Date(Date.now() + config.PAIRING_SESSION_TTL_MIN * 60 * 1000);
 
     await pool.query(
-      `INSERT INTO pairing_sessions (id, admin_id, device_label, pairing_code_hash, expires_at)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [pairingSessionId, req.admin.id, parsed.data.device_label, sha256(pairingCode), expiresAt]
+      `INSERT INTO pairing_sessions (id, admin_id, owner_identity_id, device_label, pairing_code_hash, expires_at)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [pairingSessionId, req.admin.id, req.admin.identityId ?? null, parsed.data.device_label, sha256(pairingCode), expiresAt]
     );
 
     res.status(201).json({

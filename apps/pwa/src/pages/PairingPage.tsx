@@ -1,23 +1,19 @@
 import { useState } from "react";
-import QRCode from "qrcode";
-import { startPairing } from "../api/devices";
+import { startAdminAuth, type ChallengeStartResponse } from "../api/client";
+import { normalizeAnyDeskIdInput, validateAnyDeskId } from "../utils/anydeskId";
 
 export function PairingPage() {
-  const [deviceLabel, setDeviceLabel] = useState("");
-  const [pairingCode, setPairingCode] = useState("");
-  const [sessionId, setSessionId] = useState("");
-  const [expiresAt, setExpiresAt] = useState("");
-  const [qrImage, setQrImage] = useState("");
-  const [error, setError] = useState("");
+  const [anydeskId, setAnydeskId] = useState("");
+  const [challenge, setChallenge] = useState<ChallengeStartResponse | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   return (
     <section className="pairing-layout">
       <div className="detail-card">
-        <h2>Create Pairing Session</h2>
+        <h2>Installer Ownership Challenge</h2>
         <p className="muted">
-          Run this from your admin phone/web app. Then enter the generated pairing code/session in the connectee laptop
-          installer wizard.
+          Generate the ownership challenge used by the Windows installer (`AnyDesk ID + challenge code`).
         </p>
 
         <form
@@ -26,54 +22,66 @@ export function PairingPage() {
             event.preventDefault();
             setBusy(true);
             setError("");
+            setChallenge(null);
             try {
-              const result = await startPairing(deviceLabel.trim());
-              setPairingCode(result.pairing_code);
-              setSessionId(result.pairing_session_id);
-              setExpiresAt(result.expires_at);
-              setQrImage(await QRCode.toDataURL(result.qr_payload, { width: 280, margin: 1 }));
+              const validation = validateAnyDeskId(anydeskId);
+              if (validation) {
+                throw new Error(validation);
+              }
+              const { normalized, display } = normalizeAnyDeskIdInput(anydeskId);
+              const result = await startAdminAuth(normalized);
+              setAnydeskId(display);
+              setChallenge(result);
             } catch (err) {
-              setError(err instanceof Error ? err.message : "Failed to create pairing session");
+              setError(err instanceof Error ? err.message : "Failed to create ownership challenge.");
             } finally {
               setBusy(false);
             }
           }}
         >
           <label>
-            Device label
+            AnyDesk ID
             <input
-              value={deviceLabel}
-              onChange={(e) => setDeviceLabel(e.target.value)}
-              placeholder="Overseas Laptop A"
-              minLength={3}
+              value={anydeskId}
+              onChange={(e) => setAnydeskId(normalizeAnyDeskIdInput(e.target.value).display)}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="806 716 144"
               required
             />
+            <span className="input-hint">Spacing is optional; this field auto-formats.</span>
           </label>
           {error ? <p className="error-msg">{error}</p> : null}
           <button type="submit" className="primary-btn" disabled={busy}>
-            {busy ? "Creating..." : "Generate Pairing"}
+            {busy ? "Generating..." : "Generate Challenge"}
           </button>
         </form>
       </div>
 
       <div className="detail-card">
-        <h3>Pairing Output</h3>
-        {!pairingCode ? (
-          <p className="muted">Generate a pairing session to see QR + code.</p>
+        <h3>Challenge Output</h3>
+        {!challenge ? (
+          <p className="muted">Generate a challenge to get installer values.</p>
         ) : (
-          <>
-            {qrImage ? <img src={qrImage} alt="pairing QR" className="qr-image" /> : null}
+          <div className="detail-inline">
             <p>
-              <strong>Pairing Code:</strong> {pairingCode}
+              <strong>AnyDesk ID:</strong> {challenge.anydesk_id}
             </p>
             <p>
-              <strong>Session ID:</strong> {sessionId}
+              <strong>Challenge ID:</strong> {challenge.challenge_id}
             </p>
             <p>
-              <strong>Expires:</strong> {new Date(expiresAt).toLocaleString()}
+              <strong>Expires:</strong> {new Date(challenge.expires_at).toLocaleString()}
             </p>
-            <p className="muted">Use these values in the installer pairing step on the connectee laptop.</p>
-          </>
+            <p className="muted">{challenge.delivery.note}</p>
+            {challenge.development_verification_code ? (
+              <p>
+                <strong>Installer code:</strong> {challenge.development_verification_code}
+              </p>
+            ) : (
+              <p className="muted">Verification code is hidden in production mode.</p>
+            )}
+          </div>
         )}
       </div>
     </section>

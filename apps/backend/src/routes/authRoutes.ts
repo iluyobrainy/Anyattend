@@ -8,6 +8,7 @@ import {
   signAccessToken,
   verifyAdminCredentials
 } from "../services/authService.js";
+import { config } from "../config.js";
 import { requireAdmin, type AdminRequest } from "../middleware/adminAuth.js";
 import { savePushSubscription } from "../services/pushService.js";
 
@@ -33,6 +34,13 @@ export function createAuthRoutes(): Router {
   const router = Router();
 
   router.post("/login", async (req, res) => {
+    if (!config.ENABLE_LEGACY_AUTH || config.AUTH_MODE === "ANYDESK_ID_CHALLENGE") {
+      res.status(410).json({
+        error: "Legacy email/TOTP login is disabled. Use /v2/auth/admin/start and /v2/auth/admin/verify."
+      });
+      return;
+    }
+
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "Invalid request body", details: parsed.error.flatten() });

@@ -5,6 +5,8 @@ export interface AdminRequest extends Request {
   admin?: {
     id: string;
     email: string;
+    identityId?: string;
+    anydeskId?: string;
     role: "admin";
   };
 }
@@ -20,7 +22,13 @@ export function requireAdmin(req: AdminRequest, res: Response, next: NextFunctio
 
   try {
     const claims = verifyAccessToken(token);
-    req.admin = { id: claims.sub, email: claims.email, role: "admin" };
+    req.admin = {
+      id: claims.legacy_admin_id ?? claims.sub,
+      email: claims.email ?? claims.display_anydesk_id ?? claims.anydesk_id ?? "admin",
+      identityId: claims.identity_id,
+      anydeskId: claims.display_anydesk_id ?? claims.anydesk_id,
+      role: "admin"
+    };
     next();
   } catch {
     res.status(401).json({ error: "Invalid token" });

@@ -2,34 +2,52 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-if (args.Length < 6)
-{
-    PrintUsage();
-    return;
-}
-
 var map = ParseArgs(args);
-if (!map.TryGetValue("backend-url", out var backendUrl) ||
-    !map.TryGetValue("pairing-session-id", out var pairingSessionId) ||
-    !map.TryGetValue("pairing-code", out var pairingCode))
+if (!map.TryGetValue("backend-url", out var backendUrl))
 {
     PrintUsage();
     return;
 }
 
-var payload = new
+var host = Environment.MachineName;
+var label = map.TryGetValue("device-label", out var providedLabel) && !string.IsNullOrWhiteSpace(providedLabel)
+    ? providedLabel.Trim()
+    : host;
+
+var payloadBase = new Dictionary<string, object?>
 {
-    pairing_session_id = pairingSessionId,
-    pairing_code = pairingCode,
-    host = Environment.MachineName,
-    poll_interval_sec = 60,
-    service_name = "AnyDesk",
-    webhook_fallback_url = (string?)null
+    ["host"] = host,
+    ["device_label"] = label,
+    ["poll_interval_sec"] = 60,
+    ["service_name"] = "AnyDesk",
+    ["webhook_fallback_url"] = null
 };
 
+string endpoint;
+
+if (map.TryGetValue("pairing-session-id", out var pairingSessionId) &&
+    map.TryGetValue("pairing-code", out var pairingCode))
+{
+    endpoint = "/v1/device/pair/complete";
+    payloadBase["pairing_session_id"] = pairingSessionId;
+    payloadBase["pairing_code"] = pairingCode;
+}
+else if (map.TryGetValue("anydesk-id", out var anydeskId) &&
+         map.TryGetValue("ownership-code", out var ownershipCode))
+{
+    endpoint = "/v2/device/enroll";
+    payloadBase["anydesk_id"] = anydeskId;
+    payloadBase["verification_code"] = ownershipCode;
+}
+else
+{
+    PrintUsage();
+    return;
+}
+
 using var httpClient = new HttpClient();
-var body = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-var response = await httpClient.PostAsync($"{backendUrl.TrimEnd('/')}/v1/device/pair/complete", body);
+var body = new StringContent(JsonSerializer.Serialize(payloadBase), Encoding.UTF8, "application/json");
+var response = await httpClient.PostAsync($"{backendUrl.TrimEnd('/')}{endpoint}", body);
 
 if (!response.IsSuccessStatusCode)
 {
@@ -93,7 +111,9 @@ static Dictionary<string, string> ParseArgs(string[] args)
 static void PrintUsage()
 {
     Console.WriteLine("Usage:");
-    Console.WriteLine("AnyattendProvisioner --backend-url <url> --pairing-session-id <uuid> --pairing-code <123456> [--command-signing-secret <secret>]");
+    Console.WriteLine("AnyattendProvisioner --backend-url <url> [--device-label <name>] [--command-signing-secret <secret>]");
+    Console.WriteLine("Mode A (v1): --pairing-session-id <uuid> --pairing-code <123456>");
+    Console.WriteLine("Mode B (v1.1): --anydesk-id <806716144> --ownership-code <123456>");
 }
 
 file sealed class PairResponse

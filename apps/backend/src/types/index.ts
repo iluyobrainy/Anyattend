@@ -9,7 +9,11 @@ export type DeviceStatus = "online" | "offline" | "degraded" | "critical";
 
 export interface JwtClaims {
   sub: string;
-  email: string;
+  email?: string;
+  anydesk_id?: string;
+  display_anydesk_id?: string;
+  identity_id?: string;
+  legacy_admin_id?: string;
   role: "admin";
 }
 
