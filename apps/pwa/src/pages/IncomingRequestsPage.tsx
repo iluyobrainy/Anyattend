@@ -114,7 +114,10 @@ export function IncomingRequestsPage() {
       {!loading && requests.length === 0 ? (
         <div className="empty-state">
           <h3>No requests</h3>
-          <p>Incoming requester approvals will appear here.</p>
+          <p>
+            Incoming requester approvals will appear here. If a requester ID is already whitelisted, no pending approval is
+            created.
+          </p>
         </div>
       ) : null}
     </section>

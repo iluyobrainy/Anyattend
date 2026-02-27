@@ -68,15 +68,19 @@ export function App() {
                   })
                 });
 
-                const payload = (await response.json().catch(() => ({}))) as { status?: string; error?: string };
+                const payload = (await response.json().catch(() => ({}))) as {
+                  status?: string;
+                  error?: string;
+                  request_id?: string;
+                };
                 if (!response.ok) {
                   throw new Error(payload.error || "Unable to submit request.");
                 }
 
                 setStatusMessage(
                   payload.status === "already_whitelisted"
-                    ? "This requester is already approved."
-                    : "Request submitted. Admin can now approve/decline in PWA."
+                    ? "This requester is already in whitelist. No pending approval item will appear in Requests."
+                    : `Request submitted (${payload.request_id ?? "queued"}). Admin can now approve/decline in PWA Requests.`
                 );
                 setRequesterLabel("");
                 setNote("");
